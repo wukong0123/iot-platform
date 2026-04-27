@@ -3,50 +3,105 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Smart Locker IoT Dashboard</title>
+    <title>Smart Locker IoT Command Center</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;700&display=swap"
+      rel="stylesheet"
+    />
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
+    <div class="ambient ambient-left"></div>
+    <div class="ambient ambient-right"></div>
+
     <main class="page">
-      <section class="hero">
-        <div>
-          <p class="eyebrow">Smart Locker Platform</p>
-          <h1>Live locker telemetry and alerts</h1>
+      <section class="hero panel-shell">
+        <div class="hero-copy">
+          <div class="hero-topline">
+            <span class="eyebrow">Smart Locker Platform</span>
+            <span class="live-pill">
+              <span class="live-dot"></span>
+              Live telemetry
+            </span>
+          </div>
+          <h1>Locker operations, alerts, and device health in one view.</h1>
           <p class="lede">
-            MQTT data flows into the backend, MongoDB stores the history, and this
-            dashboard shows each locker's latest state.
+            MQTT events stream into the backend, MongoDB stores the operational trail,
+            and this command center exposes the current state of every locker.
           </p>
         </div>
-        <div class="meta-card">
-          <div>
-            <span class="meta-label">Refresh</span>
-            <strong>5 seconds</strong>
+
+        <div class="hero-aside">
+          <div class="aside-card">
+            <span class="aside-label">Refresh cadence</span>
+            <strong>Every 5 seconds</strong>
           </div>
-          <div>
-            <span class="meta-label">Source</span>
-            <strong>MQTT topic `locker/{id}/data`</strong>
+          <div class="aside-card">
+            <span class="aside-label">Message source</span>
+            <strong>`locker/{id}/data`</strong>
+          </div>
+          <div class="aside-card">
+            <span class="aside-label">Focus</span>
+            <strong>Temperature, access, package retention</strong>
           </div>
         </div>
       </section>
 
-      <section class="panel">
-        <div class="panel-header">
-          <h2>Current lockers</h2>
-          <button id="refreshButton" type="button">Refresh now</button>
-        </div>
-        <div id="lockerGrid" class="locker-grid"></div>
+      <section class="overview-grid" id="overviewStats"></section>
+
+      <section class="workspace-grid">
+        <section class="panel-shell">
+          <div class="section-head">
+            <div>
+              <p class="section-label">Fleet Overview</p>
+              <h2>Active lockers</h2>
+            </div>
+            <button id="refreshButton" type="button" class="action-button">Refresh now</button>
+          </div>
+          <div id="lockerGrid" class="locker-grid"></div>
+        </section>
+
+        <section class="panel-shell focus-panel">
+          <div class="section-head">
+            <div>
+              <p class="section-label">Operations Detail</p>
+              <h2 id="selectedLockerTitle">Locker focus</h2>
+            </div>
+            <select id="historySelect" class="control-select"></select>
+          </div>
+
+          <div class="focus-card">
+            <div class="focus-meta">
+              <p id="selectedLockerMeta" class="focus-meta-text">
+                Select a locker to inspect its latest status and telemetry history.
+              </p>
+              <div id="selectedLockerAlerts" class="alerts-row"></div>
+            </div>
+            <div id="selectedLockerStats" class="focus-stats"></div>
+          </div>
+
+          <div id="chartArea" class="chart-shell">
+            <div class="empty-state">Historical chart will appear here after locker data is loaded.</div>
+          </div>
+        </section>
       </section>
 
-      <section class="panel">
-        <div class="panel-header">
-          <h2>Recent history</h2>
-          <select id="historySelect"></select>
+      <section class="panel-shell">
+        <div class="section-head">
+          <div>
+            <p class="section-label">Event Timeline</p>
+            <h2>Recent history</h2>
+          </div>
+          <p id="lastUpdatedLabel" class="footnote">Awaiting first update</p>
         </div>
+
         <div class="history-wrap">
           <table>
             <thead>
               <tr>
-                <th>Time</th>
+                <th>Timestamp</th>
                 <th>Temperature</th>
                 <th>Door</th>
                 <th>Package</th>
