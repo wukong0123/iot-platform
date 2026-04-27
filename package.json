@@ -1,0 +1,19 @@
+{
+  "name": "smart-locker-iot-platform",
+  "version": "1.0.0",
+  "description": "Minimal IoT platform for a smart locker system using Node.js, MQTT, MongoDB, and a static dashboard.",
+  "main": "backend/src/index.js",
+  "scripts": {
+    "start:backend": "node backend/src/index.js",
+    "start:simulator": "node simulator/index.js",
+    "dev:backend": "node --watch backend/src/index.js",
+    "dev:simulator": "node --watch simulator/index.js"
+  },
+  "dependencies": {
+    "aedes": "^0.51.3",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "mongoose": "^8.11.0",
+    "mqtt": "^5.10.4"
+  }
+}

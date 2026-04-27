@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Smart Locker IoT Dashboard</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="page">
+      <section class="hero">
+        <div>
+          <p class="eyebrow">Smart Locker Platform</p>
+          <h1>Live locker telemetry and alerts</h1>
+          <p class="lede">
+            MQTT data flows into the backend, MongoDB stores the history, and this
+            dashboard shows each locker's latest state.
+          </p>
+        </div>
+        <div class="meta-card">
+          <div>
+            <span class="meta-label">Refresh</span>
+            <strong>5 seconds</strong>
+          </div>
+          <div>
+            <span class="meta-label">Source</span>
+            <strong>MQTT topic `locker/{id}/data`</strong>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-header">
+          <h2>Current lockers</h2>
+          <button id="refreshButton" type="button">Refresh now</button>
+        </div>
+        <div id="lockerGrid" class="locker-grid"></div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-header">
+          <h2>Recent history</h2>
+          <select id="historySelect"></select>
+        </div>
+        <div class="history-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Time</th>
+                <th>Temperature</th>
+                <th>Door</th>
+                <th>Package</th>
+              </tr>
+            </thead>
+            <tbody id="historyTableBody"></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+
+    <script src="./app.js"></script>
+  </body>
+</html>
