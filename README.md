@@ -80,6 +80,20 @@ The telemetry section includes:
 - package-occupied sample count
 - event timeline chips for recent readings
 
+## Screenshots
+
+### Dashboard overview
+
+![Dashboard overview](docs/screenshots/overview.png)
+
+### Fleet and operations detail
+
+![Fleet and operations detail](docs/screenshots/fleet-detail.png)
+
+### Telemetry chart
+
+![Telemetry chart](docs/screenshots/telemetry-chart.png)
+
 ## MQTT message format
 
 Topic:
@@ -107,6 +121,11 @@ iot-platform/
       models/
       routes/
       services/
+  docs/
+    screenshots/
+      overview.png
+      fleet-detail.png
+      telemetry-chart.png
   frontend/
     index.html
     styles.css
