@@ -27,6 +27,13 @@ function formatTime(value) {
   return new Date(value).toLocaleString();
 }
 
+function formatTimeShort(value) {
+  return new Date(value).toLocaleTimeString([], {
+    hour: "2-digit",
+    minute: "2-digit"
+  });
+}
+
 function computeOverview(lockers) {
   const total = lockers.length;
   const alerting = lockers.filter((locker) => Array.isArray(locker.alerts) && locker.alerts.length > 0)
@@ -190,8 +197,151 @@ function renderSelectedLocker(locker) {
     )
     .join("");
 
-  chartArea.innerHTML =
-    '<div class="empty-state">Historical chart is being added in the next update. Current data and event timeline are already live.</div>';
+  chartArea.innerHTML = '<div class="empty-state">Loading historical telemetry...</div>';
+}
+
+function renderTelemetry(history, locker) {
+  if (!locker || history.length === 0) {
+    chartArea.innerHTML = '<div class="empty-state">No historical telemetry available for this locker yet.</div>';
+    return;
+  }
+
+  const samples = [...history].reverse();
+  const temperatures = samples.map((entry) => entry.temperature);
+  const minTemperature = Math.min(...temperatures);
+  const maxTemperature = Math.max(...temperatures);
+  const paddedMin = Math.floor(minTemperature - 1);
+  const paddedMax = Math.ceil(maxTemperature + 1);
+  const range = Math.max(1, paddedMax - paddedMin);
+  const width = 760;
+  const height = 280;
+  const paddingX = 34;
+  const paddingY = 24;
+  const chartWidth = width - paddingX * 2;
+  const chartHeight = height - paddingY * 2;
+
+  const points = samples.map((entry, index) => {
+    const x = paddingX + (chartWidth * index) / Math.max(samples.length - 1, 1);
+    const y =
+      height -
+      paddingY -
+      ((entry.temperature - paddedMin) / range) * chartHeight;
+
+    return {
+      entry,
+      x,
+      y
+    };
+  });
+
+  const polylinePoints = points.map((point) => `${point.x},${point.y}`).join(" ");
+  const areaPath = [
+    `M ${points[0].x} ${height - paddingY}`,
+    ...points.map((point) => `L ${point.x} ${point.y}`),
+    `L ${points[points.length - 1].x} ${height - paddingY}`,
+    "Z"
+  ].join(" ");
+
+  const gridLines = Array.from({ length: 5 }, (_, index) => {
+    const ratio = index / 4;
+    const y = paddingY + chartHeight * ratio;
+    const label = (paddedMax - range * ratio).toFixed(0);
+
+    return `
+      <line x1="${paddingX}" y1="${y}" x2="${width - paddingX}" y2="${y}" class="chart-grid-line"></line>
+      <text x="8" y="${y + 4}" class="chart-axis-text">${label}C</text>
+    `;
+  }).join("");
+
+  const firstLabel = formatTimeShort(samples[0].timestamp);
+  const middleLabel = formatTimeShort(samples[Math.floor(samples.length / 2)].timestamp);
+  const lastLabel = formatTimeShort(samples[samples.length - 1].timestamp);
+  const averageTemperature =
+    temperatures.reduce((sum, value) => sum + value, 0) / temperatures.length;
+  const doorOpenSamples = samples.filter((entry) => entry.door === 1).length;
+  const packageSamples = samples.filter((entry) => entry.has_package === 1).length;
+  const highTempSamples = samples.filter((entry) => entry.temperature > 35).length;
+
+  chartArea.innerHTML = `
+    <div class="chart-head">
+      <div>
+        <p class="section-label">Telemetry Curve</p>
+        <h3>Temperature trend</h3>
+      </div>
+      <div class="chart-legend">
+        <span><i class="legend-dot temp"></i>Temperature</span>
+        <span><i class="legend-dot door"></i>Door open sample</span>
+        <span><i class="legend-dot package"></i>Package present</span>
+      </div>
+    </div>
+
+    <div class="chart-metrics">
+      <div class="chart-metric">
+        <span>Average</span>
+        <strong>${averageTemperature.toFixed(1)}C</strong>
+      </div>
+      <div class="chart-metric">
+        <span>Peak</span>
+        <strong>${maxTemperature.toFixed(1)}C</strong>
+      </div>
+      <div class="chart-metric">
+        <span>Door open samples</span>
+        <strong>${doorOpenSamples}</strong>
+      </div>
+      <div class="chart-metric">
+        <span>Package occupied</span>
+        <strong>${packageSamples}</strong>
+      </div>
+    </div>
+
+    <div class="chart-scroll">
+      <svg viewBox="0 0 ${width} ${height}" class="trend-chart" role="img" aria-label="Temperature trend for locker ${locker.locker_id}">
+        ${gridLines}
+        <path d="${areaPath}" class="chart-area"></path>
+        <polyline points="${polylinePoints}" class="chart-line"></polyline>
+        ${points
+          .map((point) => {
+            const markerClass = point.entry.temperature > 35 ? "danger" : "";
+            return `<circle cx="${point.x}" cy="${point.y}" r="4.5" class="chart-point ${markerClass}"></circle>`;
+          })
+          .join("")}
+      </svg>
+    </div>
+
+    <div class="axis-row">
+      <span>${firstLabel}</span>
+      <span>${middleLabel}</span>
+      <span>${lastLabel}</span>
+    </div>
+
+    <div class="timeline-strip">
+      ${samples
+        .map((entry) => {
+          const classes = ["timeline-chip"];
+
+          if (entry.temperature > 35) {
+            classes.push("is-hot");
+          } else if (entry.door === 1) {
+            classes.push("is-door");
+          } else if (entry.has_package === 1) {
+            classes.push("is-package");
+          }
+
+          return `
+            <span class="${classes.join(" ")}">
+              ${formatTimeShort(entry.timestamp)} · ${entry.temperature}C · ${entry.door === 1 ? "Door open" : "Door closed"} · ${entry.has_package === 1 ? "Package in" : "Empty"}
+            </span>
+          `;
+        })
+        .join("")}
+    </div>
+
+    <div class="chart-summary">
+      <span class="summary-pill">High temperature samples: ${highTempSamples}</span>
+      <span class="summary-pill">Current state: ${formatDoor(locker.door)} / ${formatPackage(locker.has_package)}</span>
+      <span class="summary-pill">Observed samples: ${samples.length}</span>
+    </div>
+  `;
 }
 
 async function fetchJson(path) {
@@ -204,8 +354,12 @@ async function fetchJson(path) {
 }
 
 async function loadHistory(lockerId) {
-  const history = await fetchJson(`/history/${lockerId}?limit=12`);
+  const history = await fetchJson(`/history/${lockerId}?limit=24`);
   renderHistory(history);
+  renderTelemetry(
+    history,
+    state.lockers.find((locker) => locker.locker_id === lockerId)
+  );
   return history;
 }
 
