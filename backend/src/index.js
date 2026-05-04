@@ -1,5 +1,6 @@
 const express = require("express");
-
+const http = require("http");
+const { Server } = require("socket.io");
 const config = require("./config");
 const { connectToDatabase } = require("./db");
 const { createLockerRouter } = require("./routes/lockers");
@@ -9,13 +10,16 @@ async function main() {
   await connectToDatabase(config.mongoUri);
   console.log("Connected to MongoDB.");
 
+  const app = express();
+  const server = http.createServer(app);
+  const io = new Server(server, { cors: { origin: "*" } });
+
   await startBroker(config.mqttPort);
   startMqttSubscriber(config.mqttPort, {
     packageStaleSeconds: config.packageStaleSeconds,
     doorOpenStaleSeconds: config.doorOpenStaleSeconds
-  });
+  }, io);
 
-  const app = express();
   app.use(express.json());
   app.use(createLockerRouter(config.historyLimit));
   app.use(express.static(config.frontendDir));
@@ -34,7 +38,7 @@ async function main() {
     response.status(500).json({ message: "Internal server error." });
   });
 
-  app.listen(config.port, () => {
+  server.listen(config.port, () => {
     console.log(`HTTP server listening on http://127.0.0.1:${config.port}`);
   });
 }

@@ -76,11 +76,13 @@ select {
   position: relative;
   overflow: hidden;
   background:
-    linear-gradient(180deg, rgba(17, 29, 49, 0.92), rgba(9, 18, 33, 0.92)),
+    linear-gradient(180deg, rgba(17, 29, 49, 0.6), rgba(9, 18, 33, 0.6)),
     var(--panel);
   border: 1px solid var(--line);
   border-radius: 28px;
   box-shadow: var(--shadow);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
 }
 
 .panel-shell::before {
@@ -167,6 +169,13 @@ select {
   border-radius: 50%;
   background: var(--accent);
   box-shadow: 0 0 16px var(--accent);
+  animation: pulse 2s infinite ease-in-out;
+}
+
+@keyframes pulse {
+  0% { transform: scale(0.9); opacity: 0.7; }
+  50% { transform: scale(1.2); opacity: 1; }
+  100% { transform: scale(0.9); opacity: 0.7; }
 }
 
 .hero-aside {
@@ -268,9 +277,11 @@ select {
   border: 1px solid var(--line);
   border-radius: 22px;
   background:
-    linear-gradient(180deg, rgba(16, 26, 42, 0.98), rgba(8, 16, 30, 0.98));
+    linear-gradient(180deg, rgba(16, 26, 42, 0.7), rgba(8, 16, 30, 0.7));
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   cursor: pointer;
-  transition: transform 0.22s ease, border-color 0.22s ease, box-shadow 0.22s ease;
+  transition: transform 0.22s ease, border-color 0.22s ease, box-shadow 0.22s ease, background 0.3s ease;
 }
 
 .locker-card:hover,

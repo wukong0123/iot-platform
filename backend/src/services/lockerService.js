@@ -87,7 +87,7 @@ function buildAlerts(previousState, reading, thresholds) {
   };
 }
 
-async function handleLockerMessage(topic, messageBuffer, thresholds) {
+async function handleLockerMessage(topic, messageBuffer, thresholds, io) {
   const lockerId = parseTopic(topic);
   if (lockerId === null) {
     return;
@@ -135,11 +135,18 @@ async function handleLockerMessage(topic, messageBuffer, thresholds) {
     last_warning: alertState.warnings.length > 0 ? alertState.warnings.join(" | ") : null
   };
 
-  await LockerState.findOneAndUpdate({ locker_id: lockerId }, state, {
+  const updatedState = await LockerState.findOneAndUpdate({ locker_id: lockerId }, state, {
     upsert: true,
     new: true,
     setDefaultsOnInsert: true
   });
+
+  if (io) {
+    io.emit('telemetry_update', {
+      reading: reading,
+      state: updatedState
+    });
+  }
 }
 
 function startBroker(port) {
@@ -155,7 +162,7 @@ function startBroker(port) {
   });
 }
 
-function startMqttSubscriber(port, thresholds) {
+function startMqttSubscriber(port, thresholds, io) {
   const client = mqtt.connect(`mqtt://127.0.0.1:${port}`);
 
   client.on("connect", () => {
@@ -169,7 +176,7 @@ function startMqttSubscriber(port, thresholds) {
 
   client.on("message", async (topic, message) => {
     try {
-      await handleLockerMessage(topic, message, thresholds);
+      await handleLockerMessage(topic, message, thresholds, io);
     } catch (error) {
       console.error(`Failed to process topic ${topic}:`, error.message);
     }
